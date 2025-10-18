@@ -48,13 +48,29 @@ def plot_results(t, V, spikes, I, V_thresh):
     plt.show()
 
 if __name__ == "__main__":
-    import argparse
+    import argparse, os
     p = argparse.ArgumentParser()
     p.add_argument("--I", type=float, default=1.5, help="Input current nA")
     p.add_argument("--T", type=float, default=0.5, help="Total time (s)")
     p.add_argument("--dt", type=float, default=1e-4, help="Time step (s)")
+    p.add_argument("--save", type=str, default="", help="Save figure to this path and exit (e.g., screenshots/plot.png)")
+    p.add_argument("--nogui", action="store_true", help="Use non-interactive backend (saves only)")
     args = p.parse_args()
+
+    if args.nogui:
+        import matplotlib
+        matplotlib.use("Agg")  # headless
 
     t, V, spikes, I = lif_sim(T=args.T, dt=args.dt, I_base=args.I)
     print(f"Spike count: {len(spikes)}")
-    plot_results(t, V, spikes, I, V_thresh=-50.0)
+
+    fig_path = args.save
+    if fig_path:
+        os.makedirs(os.path.dirname(fig_path), exist_ok=True)
+        # draw and save without blocking
+        plot_results(t, V, spikes, I, V_thresh=-50.0)
+        import matplotlib.pyplot as plt
+        plt.savefig(fig_path, dpi=200, bbox_inches="tight")
+        print(f"Saved figure -> {fig_path}")
+    else:
+        plot_results(t, V, spikes, I, V_thresh=-50.0)
